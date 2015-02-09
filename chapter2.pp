@@ -104,11 +104,20 @@ begin
    GetChar;
 end;
 
+{ Forward Declaration }
+Procedure Expression; forward;
+
 { Parse and Translate a Math Factor }
 
 procedure Factor;
 begin
-   EmitLn('movl $' + GetNum + ', %eax')
+   if Look='(' then begin
+      Match('(');
+      Expression;
+      Match(')');
+      end
+   else
+      EmitLn('movl $' + GetNum + ', %eax');
 end;
 
 { Recognize and Translate a Multiply }
