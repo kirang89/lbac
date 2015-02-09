@@ -117,7 +117,8 @@ procedure Multiply;
 begin
    Match('*');
    Factor;
-   EmitLn('imul (SP+,D0');
+   EmitLn('imul ' + IntToStr(sp) + '(%esp)' + ', %eax');
+   sp := sp + 4;
 end;
 
 { Recognize and Translate a Divide }
@@ -126,15 +127,28 @@ procedure Divide;
 begin
    Match('/');
    Factor;
-   EmitLn('MOVE (SP)+,D1');
-   EmitLn('DIVS D1,D0');
+   sp := sp - 4;
+   EmitLn('movl %eax, ' + IntToStr(sp) + '(%esp)');
+   EmitLn('movl ' + IntToStr(sp + 4) + '(%esp)' + ', %eax');
+   EmitLn('idivl ' + IntToStr(sp) + '(%esp)');
+   EmitLn('movl %eax, ' + IntToStr(sp) + '(%esp)');
+   EmitLn('movl ' + IntToStr(sp + 8) + '(%esp), %eax');
 end;
 
 { Recognize a term }
 
 procedure Term;
 begin
-   EmitLn('movl $' + GetNum + ', %eax')
+   Factor;
+   while Look in ['*', '/'] do begin
+      sp := sp - 4;
+      EmitLn('movl %eax ' + IntToStr(sp) + '(%esp)');
+      case Look of
+	'*' : Multiply;
+	'/' : Divide;
+	else Expected('Mulop')
+      end;
+   end;
 end;
 
 { Recognize and Translate an Add }
