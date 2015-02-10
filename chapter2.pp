@@ -183,7 +183,11 @@ end;
 
 procedure Expression;
 begin
-   Term;
+   if Look in ['+', '-'] then
+      EmitLn('movl $0 %eax')
+   else
+      Term;
+
    while Look in ['+', '-'] do begin
       sp := sp - 4;
       EmitLn('movl %eax, ' + IntToStr(sp) + '(%esp)');
