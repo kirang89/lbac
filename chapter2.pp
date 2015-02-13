@@ -223,11 +223,24 @@ begin
    end;
 end;
 
+{ Read and Translate an Assignment }
+
+procedure Assignment;
+var Name: char;
+begin
+   Name := GetName;
+   Match('=');
+   Expression;
+   EmitLn('movl $' + Name + ', %%edx');
+   { Point edx to the content in eax }
+   EmitLn('movl %eax, (%edx)')
+end;
+
 { Main Program }
 
 begin
    sp := 0;
    Init;
-   Expression;
+   Assignment;
    if Look <> CR then Expected('Newline');
 end.
