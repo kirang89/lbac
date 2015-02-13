@@ -6,11 +6,12 @@ Uses sysutils;
 { Constant Declarations }
 
 const TAB = ^I;
+CR = #10;
 
 { Variable Declarations }
 
 var Look: char;              { Lookahead Character }
-var sp : Integer;
+var sp : Integer;            { Tracking the stack pointer }
 
 { Read New Character From Input Stream }
 
@@ -104,10 +105,31 @@ begin
    GetChar;
 end;
 
+{ Parse and Translate an Identifier }
+
+Procedure Ident;
+var Name : char;
+begin
+   Name := GetName;
+   if Look = '(' then begin
+      Match('(');
+      Match(')');
+      EmitLn('call ' + Name);
+      end
+   else begin
+      { Store content of variable into edx }
+      EmitLn('movl $' + Name + ', %%edx');
+
+      { Store value of variable into eax }
+      EmitLn('movl (%edx), %eax');
+   end;
+end;
+
 { Forward Declaration }
 Procedure Expression; forward;
 
 { Parse and Translate a Math Factor }
+{ <factor> ::= <number> | (<expression>) | <variable>}
 
 procedure Factor;
 begin
@@ -116,6 +138,8 @@ begin
       Expression;
       Match(')');
       end
+   else if isAlpha(Look) then
+      Ident
    else
       EmitLn('movl $' + GetNum + ', %eax');
 end;
@@ -205,4 +229,5 @@ begin
    sp := 0;
    Init;
    Expression;
+   if Look <> CR then Expected('Newline');
 end.
