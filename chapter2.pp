@@ -65,13 +65,26 @@ begin
    IsDigit := c in ['0'..'9'];
 end;
 
+{ Recognize an alphanumeric character }
+
+function IsAlNum(c : char): boolean;
+begin
+   IsAlNum := IsAlpha(c) or IsDigit(c)
+end;
+
 { Get an Identifier }
 
-function GetName: char;
+function GetName: string;
+var Token : string;
 begin
    if not IsAlpha(Look) then Expected('Name');
-   GetName := UpCase(Look);
-   GetChar;
+
+   Token := '';
+   while IsAlNum(Look) do begin
+      Token := Token + UpCase(Look);
+      GetChar;
+   end;
+   GetName := Token;
 end;
 
 { Get a Number }
@@ -108,7 +121,7 @@ end;
 { Parse and Translate an Identifier }
 
 Procedure Ident;
-var Name : char;
+var Name : string;
 begin
    Name := GetName;
    if Look = '(' then begin
@@ -226,7 +239,7 @@ end;
 { Read and Translate an Assignment }
 
 procedure Assignment;
-var Name: char;
+var Name : string;
 begin
    Name := GetName;
    Match('=');
