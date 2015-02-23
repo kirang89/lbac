@@ -43,12 +43,17 @@ begin
    Abort(s + ' Expected');
 end;
 
+procedure SkipSpace; forward;
+
 { Match a Specific Input Character }
 
 procedure Match(x: char);
 begin
-   if Look = x then GetChar
-   else Expected('''' + x + '''');
+   if Look <> x then Expected('''' + x + '''')
+   else begin
+      GetChar;
+      SkipSpace;
+   end;
 end;
 
 { Recognize an Alpha Character }
@@ -72,6 +77,21 @@ begin
    IsAlNum := IsAlpha(c) or IsDigit(c)
 end;
 
+{ Recognize a whitespace character }
+
+function IsSpace(c :char): boolean;
+begin
+   IsSpace := c in[' ', TAB]
+end;
+
+{ Skips whitespace characters in input }
+
+procedure SkipSpace;
+begin
+   while IsSpace(Look) do
+      GetChar;
+end;
+
 { Get an Identifier }
 
 function GetName: string;
@@ -85,15 +105,23 @@ begin
       GetChar;
    end;
    GetName := Token;
+   SkipSpace;
 end;
 
 { Get a Number }
 
-function GetNum: char;
+function GetNum: string;
+var Value : string;
 begin
    if not IsDigit(Look) then Expected('Integer');
-   GetNum := Look;
-   GetChar;
+
+   Value := '';
+   while IsDigit(Look) do begin
+      Value := Value + Look;
+      GetChar;
+   end;
+   GetNum := Value;
+   SkipSpace;
 end;
 
 { Output a String with Tab }
@@ -116,6 +144,7 @@ end;
 procedure Init;
 begin
    GetChar;
+   SkipSpace;
 end;
 
 { Parse and Translate an Identifier }
