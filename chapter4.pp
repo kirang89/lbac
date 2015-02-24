@@ -29,6 +29,15 @@ begin
    Read(Look);
 end;
 
+{ Skip Newline character}
+
+procedure NewLine;
+begin
+   if Look = CR then begin
+      GetChar;
+   end;
+end;
+
 { Report an Error }
 
 procedure Error(s: string);
@@ -198,12 +207,14 @@ begin
    Name := GetName;
    Match('=');
    Table[Name] := Expression;
-   Assignment := Table[Name];
 end;
 
 { Main Program }
 
 begin
    Init;
-   Writeln(Assignment);
+   repeat
+      Assignment;
+      NewLine;
+   until Look = ';';
 end.
