@@ -209,12 +209,30 @@ begin
    Table[Name] := Expression;
 end;
 
+{ Input Routine }
+procedure Input;
+begin
+   Match('>');
+   Read(Table[GetName]);
+end;
+
+{ Output Routine }
+procedure Output;
+begin
+   Match('<');
+   WriteLn(Table[GetName]);
+end;
+
 { Main Program }
 
 begin
    Init;
    repeat
-      Assignment;
+      case Look of
+	'>' : Input;
+	'<' : Output;
+	else Assignment;
+      end;
       NewLine;
    until Look = ';';
 end.
