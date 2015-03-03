@@ -283,6 +283,20 @@ end;
 
 procedure Block; Forward;
 
+{ Parsing a Loop(with no condition) }
+{ p -> loop }
+{ e -> endloop }
+procedure DoLoop;
+var L1 : string;
+begin
+   Match('p');
+   L1 := NewLabel;
+   PostLabel(L1);
+   Block;
+   Match('e');
+   EmitLn('jmp ' + L1);
+end;
+
 { Parsing a 'while' construct }
 { w -> while }
 { e -> endwhile }
@@ -348,6 +362,7 @@ begin
       case Look of
 	'i' : DoIf;
 	'w' : DoWhile;
+	'p' : DoLoop;
       else
 	Other;
       end;
