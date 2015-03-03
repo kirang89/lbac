@@ -316,6 +316,45 @@ begin
    PostLabel(L2);
 end;
 
+{ Parsing a For loop construct }
+{ f -> for }
+{ e -> endfor }
+{ Syntax: FOR <ident>:=<expr1> TO <expr2> <block> ENDFOR }
+procedure DoFor;
+var L1	: string;
+   L2	: string;
+begin
+   Match('f');
+   L1 := NewLabel;
+
+   GetName;
+   Match('=');
+
+   Expression;
+   sp := sp - 4;
+   EmitLn('movl %eax, ' + IntToStr(sp) + '(%esp)');
+
+   Expression;
+   sp := sp - 4;
+   EmitLn('movl %eax, ' + IntToStr(sp) + '(%esp)');
+
+   PostLabel(L1);
+   EmitLn('movl ' + IntToStr(sp + 4) + '(%esp), %eax');
+   EmitLn('cmpl ' + IntToStr(sp) + '(%esp), %eax');
+   L2 := NewLabel;
+   EmitLn('jge ' + L2);
+
+   Block;
+
+   EmitLn('movl ' + IntToStr(sp + 4) + '(%esp), %eax');
+   EmitLn('addl $1, %eax');
+   EmitLn('movl %eax, ' + IntToStr(sp + 4) + '(%esp)');
+
+   Match('e');
+   EmitLn('jmp ' + L1);
+   PostLabel(L2);
+end;
+
 { Parsing an 'if' construct }
 { i -> if }
 { l -> else }
@@ -363,6 +402,7 @@ begin
 	'i' : DoIf;
 	'w' : DoWhile;
 	'p' : DoLoop;
+	'f' : DoFor;
       else
 	Other;
       end;
