@@ -283,6 +283,25 @@ end;
 
 procedure Block; Forward;
 
+{ Parsing a 'while' construct }
+{ w -> while }
+{ e -> endwhile }
+procedure DoWhile;
+var L1 : string;
+   L2  : string;
+begin
+   Match('w');
+   L1 := NewLabel;
+   PostLabel(L1);
+   Condition;
+   L2 := NewLabel;
+   EmitLn('jne ' + L2);
+   Block;
+   Match('e');
+   EmitLn('jmp ' + L1);
+   PostLabel(L2);
+end;
+
 { Parsing an 'if' construct }
 { i -> if }
 { l -> else }
@@ -328,6 +347,7 @@ begin
    while not(Look in ['e', 'l']) do begin
       case Look of
 	'i' : DoIf;
+	'w' : DoWhile;
       else
 	Other;
       end;
