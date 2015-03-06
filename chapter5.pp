@@ -353,6 +353,10 @@ begin
    Match('e');
    EmitLn('jmp ' + L1);
    PostLabel(L2);
+
+   { Cleanup }
+   EmitLn('addl $8, (%esp)');
+   sp := sp + 8;
 end;
 
 { Parsing an 'if' construct }
