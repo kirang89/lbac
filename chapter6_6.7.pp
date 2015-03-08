@@ -403,9 +403,9 @@ begin
    while Look = '&' do begin
       Match('&');
       NotFactor;
-      EmitLn('movl ' + IntToStr(sp) + '(%esp), %ecx');
+      EmitLn('movl ' + IntToStr(sp) + '(%esp), %eax');
       sp := sp + 4;
-      EmitLn('andl ' + IntToStr(sp) + '(%esp), %ecx');
+      EmitLn('andl ' + IntToStr(sp) + '(%esp), %eax');
    end;
 end;
 
@@ -483,6 +483,19 @@ begin
 	'~' : BoolXor;
       end;
    end;
+end;
+
+{ Read and Translate an Assignment }
+
+procedure Assignment;
+var Name : string;
+begin
+   Name := GetName;
+   Match('=');
+   BoolExpression;
+   EmitLn('movl $' + Name + ', %%edx');
+   { Point edx to the content in eax }
+   EmitLn('movl %eax, (%edx)')
 end;
 
 { Parse and Translate a Relation }
@@ -666,5 +679,6 @@ end;
 begin
    sp := 0;
    Init;
+   { Assignment; }
    DoProgram;
 end.
