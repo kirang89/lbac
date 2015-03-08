@@ -6,7 +6,8 @@ Uses sysutils;
 { Constant Declarations }
 
 const TAB = ^I;
-CR = #10;
+   CR	  = #10;
+   LF	  = #13;
 
 { Variable Declarations }
 
@@ -112,6 +113,13 @@ procedure SkipSpace;
 begin
    while IsSpace(Look) do
       GetChar;
+end;
+
+{ Parse CR/LF characters }
+procedure Fin;
+begin
+   if Look = CR then GetChar;
+   if Look = LF then GetChar;
 end;
 
 { Get a Name }
@@ -633,6 +641,7 @@ end;
 procedure Block;
 begin
    while not(Look in ['e', 'l']) do begin
+      Fin;
       case Look of
 	'i' : DoIf;
 	'w' : DoWhile;
@@ -641,6 +650,7 @@ begin
       else
 	Other;
       end;
+      Fin;
    end;
 end;
 
