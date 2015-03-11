@@ -5,11 +5,43 @@ const TAB = ^I;
    CR	  = #10;
    LF	  = #13;
 
+{ Type Declarations  }
+
+type Symbol = string[8];
+   SymTab   = array[1..1000] of Symbol;
+   TabPtr   = ^SymTab;
+   SymType  = (IfSym, ElseSym, EndifSym,
+	       EndSym, Ident, Number, Op);
+
 { Variable Declarations }
 
 var Look : char;              { Lookahead Character }
-   sp	 : integer;	       { Stack Pointer }
-   Token : string;
+   Token : SymType;	       { Current Token}
+   Value : String[16];	       { String Token of 'Look'}
+
+{ Definition of Keywords and Token Types }
+
+const KWlist: array [1..4] of Symbol =
+              ('IF', 'ELSE', 'ENDIF', 'END');
+
+{ Table Lookup }
+
+{ If the input string matches a table entry, return the entry
+  index.  If not, return a zero.  }
+
+function Lookup(T: TabPtr; s: string; n: integer): integer;
+var i: integer;
+    found: boolean;
+begin
+   found := false;
+   i := n;
+   while (i > 0) and not found do
+      if s = T^[i] then
+         found := true
+      else
+         dec(i);
+   Lookup := i;
+end;
 
 { Read New Character From Input Stream }
 
@@ -141,7 +173,8 @@ end;
 
 { A Lexical Scanner }
 
-function Scan: string;
+procedure Scan;
+var k : integer;
 begin
    { Ensure that CR/LF are skipped }
    while Look = CR do
@@ -149,22 +182,26 @@ begin
 
    if IsAlpha(Look) then
    begin
-      Scan := GetName;
-      WriteLn('Name => ' + Scan);
+      Value := GetName;
+      k := Lookup(Addr(KWlist), Value, 4);
+      if k = 0 then
+	 Token := Ident
+      else
+	 Token := SymType(k - 1);
    end
    else if IsDigit(Look) then
    begin
-      Scan := GetNum;
-      WriteLn('Number => ' + Scan);
+      Value := GetNum;
+      Token := Number;
    end
    else if IsOp(Look) then
    begin
-      Scan := GetOp;
-      WriteLn('Op => ' + Scan);
+      Value := GetOp;
+      Token := Op;
    end
    else begin
-      Scan := Look;
-      WriteLn('Other => ' + Scan);
+      Value := Look;
+      Token := Op;
       GetChar;
    end;
 
@@ -182,7 +219,13 @@ end;
 begin
    Init;
    repeat
-      Token := Scan;
-      if Token = CR then Fin;
-   until Token = '.';
+      Scan;
+      case Token of
+	Ident				 : write('Ident ');
+	Number				 : write('Number ');
+	Op				 : write('Operator ');
+	IfSym, ElseSym, Endifsym, EndSym : write('Keyword ');
+      end;
+      WriteLn(Value);
+   until Token = EndSym;
 end.
