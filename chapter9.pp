@@ -135,6 +135,88 @@ begin
    SkipWhite;
 end;
 
+procedure PostLabel(L : string);
+begin
+   Write(L, ':');
+end;
+
+{ Parse and Translate the Statement Part }
+
+procedure Statements;
+begin
+   Match('b');
+   while Look <> 'e' do
+      GetChar;
+   Match('e');
+end;
+
+{ Process Label Statement }
+
+procedure Labels;
+begin
+   Match('l');
+end;
+
+{ Process Const Statement }
+
+procedure Constants;
+begin
+   Match('c');
+end;
+
+{ Process Type Statement }
+
+procedure Types;
+begin
+   Match('t');
+end;
+
+{ Process Var Statement }
+
+procedure Variables;
+begin
+   Match('v');
+end;
+
+{ Process Procedure Definition }
+
+procedure DoProcedure;
+begin
+   Match('p');
+end;
+
+{ Process Function Definition }
+
+procedure DoFunction;
+begin
+   Match('f');
+end;
+
+{ Parse and Translate the Declaration Part }
+
+procedure Declarations;
+begin
+   while Look in ['l', 'c', 't', 'v', 'p', 'f'] do
+      case Look of
+       'l': Labels;
+       'c': Constants;
+       't': Types;
+       'v': Variables;
+       'p': DoProcedure;
+       'f': DoFunction;
+      end;
+end;
+
+{ Parse and Translate a Pascal Block }
+
+procedure DoBlock(Name: char);
+begin
+   Declarations;
+   EmitLn('');
+   PostLabel(Name);
+   Statements;
+end;
+
 { Write the Prolog }
 
 procedure Prolog;
@@ -149,9 +231,9 @@ end;
 
 procedure Epilog;
 begin
-   EmitLn('movl %eax, %ebx  # Set return code');
-   EmitLn('movl $1, %eax    # Linux kernel command to exit a program');
-   EmitLn('int $0x80        # Wakes up kernel to run the exit command');
+   EmitLn('movl %eax, %ebx      # Set return code');
+   EmitLn('movl $1, %eax        # Linux kernel command to exit a program');
+   EmitLn('int $0x80            # Wakes up kernel to run the exit command');
 end;
 
 { Parse and Translate A Program }
@@ -162,9 +244,7 @@ begin
    Match('p');            { Handles program header part }
    Name := GetName;
    Prolog;
-   EmitLn('');
-   EmitLn(UpCase(Name));
-   EmitLn('');
+   DoBlock(Name);
    Match('.');
    Epilog;
 end;
