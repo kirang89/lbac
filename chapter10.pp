@@ -10,6 +10,7 @@ const TAB = ^I;
 
 var Look  : char;              { Lookahead Character }
    LCount : integer;
+   ST	  : array['A'..'Z'] of char;
 
 { Recognize an Alpha Character }
 
@@ -23,6 +24,13 @@ end;
 function IsDigit(c: char): boolean;
 begin
    IsDigit := c in ['0'..'9'];
+end;
+
+{ Look for Symbol in Table }
+
+function InTable(n: char): Boolean;
+begin
+   InTable := ST[n] <> ' ';
 end;
 
 { Output a String with Tab }
@@ -133,6 +141,9 @@ procedure Alloc(N: char);
 var Symbol : string;
    Val	   : string;
 begin
+   if InTable(N) then Abort('Duplicate Variable Name ' + N);
+   ST[N] := 'v';
+
    if Look = '=' then begin
       Match('=');
 
@@ -176,12 +187,30 @@ begin
       end;
 end;
 
+{ Parse and Translate an Assignment Statement }
+
+procedure Assignment;
+begin
+   GetChar;
+end;
+
+{ Parse and Translate a Block of Statements }
+{  <block> ::= (Assignment)* }
+
+procedure Block;
+begin
+   while Look <> 'e' do
+      Assignment;
+end;
+
 { Parse and Translate a Main Program }
 { <main> := BEGIN <block> END }
+
 procedure Main;
 begin
    Match('b');
    Prolog;
+   Block;
    Match('e');
    Epilog;
 end;
@@ -201,8 +230,11 @@ end;
 { Initialize }
 
 procedure Init;
+var i: char;
 begin
    LCount := 0;
+   for i := 'A' to 'Z' do
+      ST[i] := ' ';
    GetChar;
 end;
 
