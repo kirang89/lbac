@@ -9,6 +9,7 @@ const TAB = ^I;
 { Variable Declarations }
 
 var Look  : char;              { Lookahead Character }
+   sp	  : integer;
    LCount : integer;
    ST	  : array['A'..'Z'] of char;
 
@@ -187,11 +188,109 @@ begin
       end;
 end;
 
+{ Recognize and Translate an Add }
+procedure Term; forward;
+procedure Add;
+begin
+   Match('+');
+   Term;
+   EmitLn('addl '+ IntToStr(sp) +'(%esp), %eax');
+end;
+
+{ Recognize and Translate a Subtract }
+
+procedure Subtract;
+begin
+   Match('-');
+   Term;
+   EmitLn('subl '+ IntToStr(sp) +'(%esp), %eax');
+   EmitLn('negl %eax')
+end;
+
+{ Recognize and Translate a Multiply }
+procedure Factor; forward;
+procedure Multiply;
+begin
+   Match('*');
+   Factor;
+   EmitLn('imul ' + IntToStr(sp) + '(%esp)' + ', %eax');
+   sp := sp + 4;
+end;
+
+{ Recognize and Translate a Divide }
+
+procedure Divide;
+begin
+   Match('/');
+   Factor;
+   sp := sp - 4;
+   EmitLn('movl %eax, ' + IntToStr(sp) + '(%esp)');
+   EmitLn('movl ' + IntToStr(sp + 4) + '(%esp)' + ', %eax');
+   EmitLn('idivl ' + IntToStr(sp) + '(%esp)');
+   EmitLn('movl %eax, ' + IntToStr(sp) + '(%esp)');
+   EmitLn('movl ' + IntToStr(sp + 8) + '(%esp), %eax');
+end;
+
+{ Recognize a term }
+
+procedure Term;
+begin
+   Factor;
+   while Look in ['*', '/'] do begin
+      sp := sp - 4;
+      EmitLn('movl %eax ' + IntToStr(sp) + '(%esp)');
+      case Look of
+	'*' : Multiply;
+	'/' : Divide;
+	else Expected('Mulop')
+      end;
+   end;
+end;
+
+{ Parse and Translate a Math Expression }
+
+procedure Expression;
+begin
+   if Look in ['+', '-'] then
+      EmitLn('movl $0 %eax')
+   else
+      Term;
+
+   while Look in ['+', '-'] do begin
+      sp := sp - 4;
+      EmitLn('movl %eax, ' + IntToStr(sp) + '(%esp)');
+      case LOOK of
+	'+' : Add;
+	'-' : Subtract;
+      else Expected('Addop');
+      end;
+   end;
+end;
+
+{ Parse and Translate a Math Factor }
+{ <factor> ::= <number> | (<expression>) | <variable>}
+procedure Ident; forward;
+procedure Factor;
+begin
+   if Look='(' then begin
+      Match('(');
+      Expression;
+      Match(')');
+      end
+   else if isAlpha(Look) then
+      Ident
+   else
+      EmitLn('movl $' + IntToStr(GetNum) + ', %eax');
+end;
+
 { Parse and Translate an Assignment Statement }
 
 procedure Assignment;
+var Name : char;
 begin
-   GetChar;
+   Name := GetName;
+   Match('=');
+   Expression;
 end;
 
 { Parse and Translate a Block of Statements }
@@ -225,6 +324,26 @@ begin
    TopDecls;
    Main;
    Match('.');
+end;
+
+{ Parse and Translate an Identifier }
+
+Procedure Ident;
+var Name : string;
+begin
+   Name := GetName;
+   if Look = '(' then begin
+      Match('(');
+      Match(')');
+      EmitLn('call ' + Name);
+      end
+   else begin
+      { Store content of variable into edx }
+      EmitLn('movl $' + Name + ', %%edx');
+
+      { Store value of variable into eax }
+      EmitLn('movl (%edx), %eax');
+   end;
 end;
 
 { Initialize }
